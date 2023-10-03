@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004-2021 The FlameRobin Development Team
+  Copyright (c) 2004-2022 The FlameRobin Development Team
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -40,8 +40,18 @@ private:
     wxCheckBox* checkbox_validity;
     wxCheckBox* checkbox_commit;
     wxCheckBox* checkbox_space;
+    
+    wxCheckBox* checkbox_fix_fss_data;
+    wxCheckBox* checkbox_fix_fss_metadata;
+    wxCheckBox* checkbox_readonlyDB;
+    
     wxStaticText* label_pagesize;
     wxChoice* choice_pagesize;
+
+    wxRadioBox* radiobox_replicamode;
+
+    wxSpinCtrl* spinctrl_pagebuffers;
+
     void createControls();
     void layoutControls();
     virtual void updateControls();
@@ -63,4 +73,22 @@ private:
     DECLARE_EVENT_TABLE()
 };
 
+
+class RestoreThread : public BackupRestoreThread
+{
+public:
+    RestoreThread(RestoreFrame* frame, wxString server,
+        wxString username, wxString password, wxString rolename, wxString charset,
+        wxString bkfilename, wxString dbfilename,
+        int pagesize, int pagebuffers, IBPP::BRF flags, int interval, int parallel,
+        wxString skipData, wxString includeData,
+        wxString cryptPluginName, wxString keyPlugin, wxString keyEncrypt
+    );
+protected:
+    virtual void Execute(IBPP::Service);
+
+    int pagesizeM;
+    int pagebuffersM;
+
+};
 #endif // RESTOREFRAME_H

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004-2021 The FlameRobin Development Team
+  Copyright (c) 2004-2022 The FlameRobin Development Team
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -30,6 +30,7 @@
 
 #include "core/Observer.h"
 #include "core/Subject.h"
+#include "gui/FRStyle.h"
 
 enum StorageGranularity
 {
@@ -60,6 +61,7 @@ private:
     wxString homePathM;
     wxString userHomePathM;
     wxFileName configFileNameM;
+
 protected:
     virtual void lockedChanged(bool locked);
 public:
@@ -147,6 +149,9 @@ public:
     // Returns the full pathname of the specified system template, giving
     // precedence to any existing user override.
     const wxString getSysTemplateFileName(const wxString& templateName);
+    // returns the path containing the xml styles.
+    wxString getXmlStylesPath() const;
+
     bool getUseLocalConfig() const;
 };
 

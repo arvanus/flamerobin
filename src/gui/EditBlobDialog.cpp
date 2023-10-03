@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004-2021 The FlameRobin Development Team
+  Copyright (c) 2004-2022 The FlameRobin Development Team
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -127,12 +127,12 @@ void EditBlobDialogSTC::setIsNull(bool isNull)
     {
         wxStyledTextCtrl::SetText("[null]");
         SelectAll();
-        StartStyling(0, 0);
+        StartStyling(0);
         SetStyling(GetTextLength(), 0x0A);
     }
     else
     {
-        StartStyling(0, 0);
+        StartStyling(0);
         SetStyling(GetTextLength(), 0);
     }
     isNullM = isNull;
@@ -787,7 +787,7 @@ bool EditBlobDialog::loadFromStreamAsBinary(wxInputStream& stream, bool isNull, 
         }
     }
     // Set text styling
-    blob_binary->StartStyling(0, 0);
+    blob_binary->StartStyling(0);
     for (int i = 0; i < blob_binary->GetLineCount(); i++)
         blob_binary->SetStyleBytes(CharsPerLine, &styleBytes[0]);
     progressEnd();

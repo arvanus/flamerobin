@@ -38,6 +38,12 @@
                 </setting>
             </enables>
         </setting>
+                <setting type="file">
+                    <caption>Library file name:</caption>
+                    <description>FbClient.dll or gds32.dll </description>
+                    <key>LibraryFile</key>
+                </setting>
+		
         <!--
         <setting type="checkbox">
             <caption>Confirm quit</caption>
@@ -68,6 +74,18 @@
             <key>OrderDatabasesInTree</key>
             <default>0</default>
             <related /><!-- this moves the checkbox closer to the previous one -->
+        </setting>
+        <setting type="checkbox">
+            <caption>Show all indices in one node in tree</caption>
+            <description>If checked the all indices will be shown in one node in the tree by default (can be overridden per database)</description>
+            <key>ShowOneNodeIndices</key>
+            <default>0</default>
+        </setting>
+        <setting type="checkbox">
+            <caption>Show system indices in tree</caption>
+            <description>If checked the system indices will be shown in the tree by default (can be overridden per database)</description>
+            <key>ShowSystemIndices</key>
+            <default>1</default>
         </setting>
         <setting type="checkbox">
             <caption>Show system domains in tree</caption>
@@ -239,6 +257,11 @@
             <key>sqlEditorAutoIndent</key>
             <default>1</default>
         </setting>
+        <setting type="checkbox">
+            <caption>Use alternate save SQL file method (don't change this option if not necessary)</caption>
+            <key>useAlternativeSaveMode</key>
+            <default>0</default>
+        </setting>
         <node>
             <caption>Code Completion</caption>
             <description>SQL Code Completion</description>
@@ -362,6 +385,35 @@
                 </option>
             </setting>
         </node>
+		<node>
+            <caption>Style Configurator</caption>
+            <description>SQL Style Editor </description>
+            <image>0</image>
+			<setting type="themecombobox">
+				<caption>Select theme:</caption>
+                <description>Select the file with the style</description>
+                <key>StyleTheme</key>
+				<default>Default</default>
+				<aligngroup>1</aligngroup>
+                <file>StyleTheme</file>
+            </setting>
+			<!--
+			<setting type="colour">
+				<caption>Foreground Colour:</caption>
+                <description>Foregound Colour with the style</description>
+                <key>ForegroundColour</key>
+				<default>BDAE9D</default>
+				<aligngroup>1</aligngroup>
+            </setting>
+			<setting type="colour">
+				<caption>Background Colour:</caption>
+                <description>Background Colour with the style</description>
+                <key>BackgroundColour</key>
+				<default>2A211C</default>
+				<aligngroup>2</aligngroup>
+            </setting>
+			-->
+		</node>
     </node>
     <node>
         <caption>Data Grid</caption>

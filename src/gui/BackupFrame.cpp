@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004-2021 The FlameRobin Development Team
+  Copyright (c) 2004-2022 The FlameRobin Development Team
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -32,6 +32,7 @@
 
 #include <wx/datetime.h>
 #include <wx/filename.h>
+#include <wx/spinctrl.h>
 
 #include <algorithm>
 
@@ -46,130 +47,7 @@
 #include "gui/UsernamePasswordDialog.h"
 #include "metadata/database.h"
 #include "metadata/server.h"
-
-// worker thread class to perform database backup
-class BackupThread: public wxThread {
-public:
-    BackupThread(BackupFrame* frame, wxString server, wxString username,
-        wxString password, wxString dbfilename, wxString bkfilename,
-        IBPP::BRF flags);
-
-    virtual void* Entry();
-    virtual void OnExit();
-private:
-    BackupFrame* frameM;
-    wxString serverM;
-    wxString usernameM;
-    wxString passwordM;
-    wxString dbfileM;
-    wxString bkfileM;
-    IBPP::BRF brfM;
-    void logError(wxString& msg);
-    void logImportant(wxString& msg);
-    void logProgress(wxString& msg);
-};
-
-BackupThread::BackupThread(BackupFrame* frame, wxString server,
-        wxString username, wxString password, wxString dbfilename,
-        wxString bkfilename, IBPP::BRF flags)
-    : wxThread()
-{
-    frameM = frame;
-    serverM = server;
-    usernameM = username;
-    passwordM = password;
-    dbfileM = dbfilename;
-    bkfileM = bkfilename;
-    // always use verbose flag
-    brfM = (IBPP::BRF)((int)flags | (int)IBPP::brVerbose);
-}
-
-void* BackupThread::Entry()
-{
-    wxDateTime now;
-    wxString msg;
-
-    try
-    {
-        msg.Printf(_("Connecting to server %s..."), serverM.c_str());
-        logImportant(msg);
-        IBPP::Service svc = IBPP::ServiceFactory(wx2std(serverM),
-            wx2std(usernameM), wx2std(passwordM));
-        svc->Connect();
-
-        now = wxDateTime::Now();
-        msg.Printf(_("Database backup started %s"), now.FormatTime().c_str());
-        logImportant(msg);
-        svc->StartBackup(wx2std(dbfileM), wx2std(bkfileM), brfM);
-        while (true)
-        {
-            if (TestDestroy())
-            {
-                now = wxDateTime::Now();
-                msg.Printf(_("Database backup canceled %s"),
-                    now.FormatTime().c_str());
-                logImportant(msg);
-                break;
-            }
-            const char* c = svc->WaitMsg();
-            if (c == 0)
-            {
-                now = wxDateTime::Now();
-                msg.Printf(_("Database backup finished %s"),
-                    now.FormatTime().c_str());
-                logImportant(msg);
-                break;
-            }
-            msg = c;
-            logProgress(msg);
-        }
-        svc->Disconnect();
-    }
-    catch (IBPP::Exception& e)
-    {
-        now = wxDateTime::Now();
-        msg.Printf(_("Database backup canceled %s due to IBPP exception:\n\n"),
-            now.FormatTime().c_str());
-        msg += e.what();
-        logError(msg);
-    }
-    catch (...)
-    {
-        now = wxDateTime::Now();
-        msg.Printf(_("Database backup canceled %s due to exception"),
-            now.FormatTime().c_str());
-        logError(msg);
-    }
-    return 0;
-}
-
-void BackupThread::OnExit()
-{
-    if (frameM != 0)
-    {
-        wxCommandEvent event(wxEVT_COMMAND_MENU_SELECTED,
-            BackupRestoreBaseFrame::ID_thread_finished);
-        wxPostEvent(frameM, event);
-    }
-}
-
-void BackupThread::logError(wxString& msg)
-{
-    if (frameM != 0)
-        frameM->threadOutputMsg(msg, BackupRestoreBaseFrame::error_message);
-}
-
-void BackupThread::logImportant(wxString& msg)
-{
-    if (frameM != 0)
-        frameM->threadOutputMsg(msg, BackupRestoreBaseFrame::important_message);
-}
-
-void BackupThread::logProgress(wxString& msg)
-{
-    if (frameM != 0)
-        frameM->threadOutputMsg(msg, BackupRestoreBaseFrame::progress_message);
-}
+#include "ShutdownFrame.h"
 
 BackupFrame::BackupFrame(wxWindow* parent, DatabasePtr db)
     : BackupRestoreBaseFrame(parent, db)
@@ -191,14 +69,7 @@ BackupFrame::BackupFrame(wxWindow* parent, DatabasePtr db)
 //! implementation details
 void BackupFrame::createControls()
 {
-    panel_controls = new wxPanel(this, wxID_ANY, wxDefaultPosition,
-        wxDefaultSize, wxTAB_TRAVERSAL | wxCLIP_CHILDREN);
-    label_filename = new wxStaticText(panel_controls, wxID_ANY,
-        _("Backup file:"));
-    text_ctrl_filename = new FileTextControl(panel_controls,
-        ID_text_ctrl_filename, wxEmptyString);
-    button_browse = new wxButton(panel_controls, ID_button_browse, _("..."),
-        wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+    BackupRestoreBaseFrame::createControls();
 
     checkbox_checksum = new wxCheckBox(panel_controls, wxID_ANY,
         _("Ignore checksums"));
@@ -206,56 +77,54 @@ void BackupFrame::createControls()
         _("Ignore limbo transactions"));
     checkbox_transport = new wxCheckBox(panel_controls, wxID_ANY,
         _("Use non-transportable format"));
-    checkbox_metadata = new wxCheckBox(panel_controls, wxID_ANY,
-        _("Only backup metadata"));
     checkbox_garbage = new wxCheckBox(panel_controls, wxID_ANY,
         _("Don't perform garbage collection"));
     checkbox_extern = new wxCheckBox(panel_controls, wxID_ANY,
         _("Convert external tables"));
+    checkbox_expand = new wxCheckBox(panel_controls, wxID_ANY,
+        _("No data compression"));
+    checkbox_olddescription = new wxCheckBox(panel_controls, wxID_ANY,
+        _("Save old style metadata descriptions"));
+    checkbox_noDBtrigger = new wxCheckBox(panel_controls, wxID_ANY,
+        _("Do not run database triggers (FB2.5+)"));
+    checkbox_zip = new wxCheckBox(panel_controls, wxID_ANY,
+        _("Zip compressed format (FB4.0+)"));
 
-    checkbox_showlog = new wxCheckBox(panel_controls, ID_checkbox_showlog,
-        _("Show complete log"));
-    button_start = new wxButton(panel_controls, ID_button_start,
-        _("&Start Backup"));
 
-    text_ctrl_log = new LogTextControl(this, ID_text_ctrl_log);
+
 }
 
 void BackupFrame::layoutControls()
 {
-    int wh = text_ctrl_filename->GetMinHeight();
-    button_browse->SetSize(wh, wh);
+    
+    BackupRestoreBaseFrame::layoutControls();
 
-    wxBoxSizer* sizerFilename = new wxBoxSizer(wxHORIZONTAL);
-    sizerFilename->Add(label_filename, 0, wxALIGN_CENTER_VERTICAL);
-    sizerFilename->Add(styleguide().getControlLabelMargin(), 0);
-    sizerFilename->Add(text_ctrl_filename, 1, wxALIGN_CENTER_VERTICAL);
-    sizerFilename->Add(styleguide().getBrowseButtonMargin(), 0);
-    sizerFilename->Add(button_browse, 0, wxALIGN_CENTER_VERTICAL);
-
-    wxGridSizer* sizerChecks = new wxGridSizer(3, 2,
+    wxGridSizer* sizerChecks = new wxGridSizer(3, 3,
         styleguide().getCheckboxSpacing(),
         styleguide().getUnrelatedControlMargin(wxHORIZONTAL));
     sizerChecks->Add(checkbox_checksum, 0, wxEXPAND);
-    sizerChecks->Add(checkbox_metadata, 0, wxEXPAND);
     sizerChecks->Add(checkbox_limbo, 0, wxEXPAND);
     sizerChecks->Add(checkbox_garbage, 0, wxEXPAND);
     sizerChecks->Add(checkbox_transport, 0, wxEXPAND);
     sizerChecks->Add(checkbox_extern, 0, wxEXPAND);
+    sizerChecks->Add(checkbox_expand, 0, wxEXPAND);
+    sizerChecks->Add(checkbox_olddescription, 0, wxEXPAND);
+    sizerChecks->Add(checkbox_noDBtrigger, 0, wxEXPAND);
+    sizerChecks->Add(checkbox_zip, 0, wxEXPAND);
 
-    wxBoxSizer* sizerButtons = new wxBoxSizer(wxHORIZONTAL);
-    sizerButtons->Add(checkbox_showlog, 0, wxALIGN_CENTER_VERTICAL);
-    sizerButtons->Add(0, 0, 1, wxEXPAND);
-    sizerButtons->Add(button_start);
+
 
     wxBoxSizer* sizerPanelV = new wxBoxSizer(wxVERTICAL);
     sizerPanelV->Add(0, styleguide().getFrameMargin(wxTOP));
     sizerPanelV->Add(sizerFilename, 0, wxEXPAND);
     sizerPanelV->Add(0, styleguide().getRelatedControlMargin(wxVERTICAL));
     sizerPanelV->Add(sizerChecks);
+    sizerPanelV->Add(0, styleguide().getRelatedControlMargin(wxVERTICAL));
+    sizerPanelV->Add(sizerGeneralOptions, 0, wxEXPAND);
     sizerPanelV->Add(0, styleguide().getUnrelatedControlMargin(wxVERTICAL));
     sizerPanelV->Add(sizerButtons, 0, wxEXPAND);
     sizerPanelV->Add(0, styleguide().getRelatedControlMargin(wxVERTICAL));
+
     wxBoxSizer* sizerPanelH = new wxBoxSizer(wxHORIZONTAL);
     sizerPanelH->Add(styleguide().getFrameMargin(wxLEFT), 0);
     sizerPanelH->Add(sizerPanelV, 1, wxEXPAND);
@@ -274,15 +143,22 @@ void BackupFrame::layoutControls()
 
 void BackupFrame::updateControls()
 {
+    BackupRestoreBaseFrame::updateControls();
+
     bool running = getThreadRunning();
-    button_browse->Enable(!running);
-    text_ctrl_filename->Enable(!running);
+
+
     checkbox_checksum->Enable(!running);
     checkbox_limbo->Enable(!running);
-    checkbox_metadata->Enable(!running);
     checkbox_garbage->Enable(!running);
     checkbox_transport->Enable(!running);
     checkbox_extern->Enable(!running);
+
+    checkbox_expand->Enable(!running);
+    checkbox_olddescription->Enable(!running);
+    checkbox_noDBtrigger->Enable(!running);
+    checkbox_zip->Enable(!running);
+
     button_start->Enable(!running && !text_ctrl_filename->GetValue().empty());
 }
 
@@ -305,6 +181,16 @@ void BackupFrame::doReadConfigSettings(const wxString& prefix)
             flags.end() != std::find(flags.begin(), flags.end(), "no_transportable"));
         checkbox_extern->SetValue(
             flags.end() != std::find(flags.begin(), flags.end(), "external_tables"));
+
+        checkbox_expand->SetValue(
+            flags.end() != std::find(flags.begin(), flags.end(), "no_data_compression"));
+        checkbox_olddescription->SetValue(
+            flags.end() != std::find(flags.begin(), flags.end(), "old_description"));
+        checkbox_noDBtrigger->SetValue(
+            flags.end() != std::find(flags.begin(), flags.end(), "no_db_triggers"));
+        checkbox_zip->SetValue(
+            flags.end() != std::find(flags.begin(), flags.end(), "compressed_format"));
+
     }
     updateControls();
 }
@@ -312,6 +198,7 @@ void BackupFrame::doReadConfigSettings(const wxString& prefix)
 void BackupFrame::doWriteConfigSettings(const wxString& prefix) const
 {
     BackupRestoreBaseFrame::doWriteConfigSettings(prefix);
+
     wxArrayString flags;
     if (checkbox_checksum->IsChecked())
         flags.push_back("ignore_checksums");
@@ -325,6 +212,16 @@ void BackupFrame::doWriteConfigSettings(const wxString& prefix) const
         flags.push_back("no_transportable");
     if (checkbox_extern->IsChecked())
         flags.push_back("external_tables");
+
+    if (checkbox_expand->IsChecked())
+        flags.push_back("no_data_compression");
+    if (checkbox_olddescription->IsChecked())
+        flags.push_back("old_description");
+    if (checkbox_noDBtrigger->IsChecked())
+        flags.push_back("no_db_triggers");
+    if (checkbox_zip->IsChecked())
+        flags.push_back("compressed_format");
+
     config().setValue(prefix + Config::pathSeparator + "options", flags);
 }
 
@@ -369,7 +266,7 @@ void BackupFrame::OnBrowseButtonClick(wxCommandEvent& WXUNUSED(event))
 
 void BackupFrame::OnStartButtonClick(wxCommandEvent& WXUNUSED(event))
 {
-    verboseMsgsM = checkbox_showlog->IsChecked();
+    verboseMsgsM = checkbox_showlog->IsChecked() || spinctrl_showlogInterval->GetValue() > 0;
     clearLog();
 
     DatabasePtr database = getDatabase();
@@ -383,25 +280,73 @@ void BackupFrame::OnStartButtonClick(wxCommandEvent& WXUNUSED(event))
     wxString password;
     if (!getConnectionCredentials(this, database, username, password))
         return;
+    wxString rolename;
+    wxString charset;
+    rolename = database->getRole();
+    charset = database->getConnectionCharset();
 
     int flags = (int)IBPP::brVerbose; // this will be ORed in anyway
     if (checkbox_checksum->IsChecked())
         flags |= (int)IBPP::brIgnoreChecksums;
     if (checkbox_limbo->IsChecked())
         flags |= (int)IBPP::brIgnoreLimbo;
-    if (checkbox_metadata->IsChecked())
-        flags |= (int)IBPP::brMetadataOnly;
     if (checkbox_garbage->IsChecked())
         flags |= (int)IBPP::brNoGarbageCollect;
     if (checkbox_transport->IsChecked())
         flags |= (int)IBPP::brNonTransportable;
     if (checkbox_extern->IsChecked())
         flags |= (int)IBPP::brConvertExtTables;
+    if (checkbox_expand->IsChecked())
+        flags |= (int)IBPP::brConvertExtTables;
+    if (checkbox_olddescription->IsChecked())
+        flags |= (int)IBPP::brOldDescriptions;
+    if (checkbox_noDBtrigger->IsChecked())
+        flags |= (int)IBPP::brNoDBTriggers;
+    if (checkbox_zip->IsChecked())
+        flags |= (int)IBPP::brZip;
+
+    if (checkbox_metadata->IsChecked())
+        flags |= (int)IBPP::brMetadataOnly;
+
+    if (checkbox_statictime->IsChecked())
+        flags |= (int)IBPP::brstatistics_time;
+    if (checkbox_staticdelta->IsChecked())
+        flags |= (int)IBPP::brstatistics_delta;
+    if (checkbox_staticpageread->IsChecked())
+        flags |= (int)IBPP::brstatistics_pagereads;
+    if (checkbox_staticpagewrite->IsChecked())
+        flags |= (int)IBPP::brstatistics_pagewrites;
 
     startThread(std::make_unique<BackupThread>(this,
-        server->getConnectionString(), username, password,
+        server->getConnectionString(), username, password, rolename, charset,
         database->getPath(), text_ctrl_filename->GetValue(),
-        (IBPP::BRF)flags));
+        (IBPP::BRF)flags, spinctrl_showlogInterval->GetValue(), spinctrl_parallelworkers->GetValue(),
+        textCtrl_skipdata->GetValue(), textCtrl_includedata->GetValue(), 
+        textCtrl_crypt->GetValue(), textCtrl_keyholder->GetValue(), textCtrl_keyname->GetValue()
+        )
+    );
+    
     updateControls();
 }
 
+BackupThread::BackupThread(BackupFrame* frame,
+    wxString server, wxString username, wxString password,
+    wxString rolename, wxString charset, wxString dbfilename,
+    wxString bkfilename, IBPP::BRF flags, int interval, int parallel,
+    wxString skipData, wxString includeData, wxString cryptPluginName,
+    wxString keyPlugin, wxString keyEncrypt)
+    :factorM(0),
+    BackupRestoreThread(frame, server, username, password,rolename, charset, 
+        dbfilename,bkfilename, flags, interval, parallel, skipData, includeData, cryptPluginName,
+        keyPlugin, keyEncrypt)
+{
+}
+
+void BackupThread::Execute(IBPP::Service svc)
+{
+    svc->StartBackup(wx2std(dbfileM), wx2std(bkfileM), wx2std(outputFileM),
+        factorM, brfM, wx2std(cryptPluginNameM), wx2std(keyPluginM),
+        wx2std(keyEncryptM), wx2std(skipDataM), wx2std(includeDataM), 
+        intervalM, parallelM
+    );
+}

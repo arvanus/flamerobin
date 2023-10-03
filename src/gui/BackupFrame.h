@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004-2021 The FlameRobin Development Team
+  Copyright (c) 2004-2022 The FlameRobin Development Team
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -36,12 +36,17 @@ class BackupFrame: public BackupRestoreBaseFrame {
 private:
     wxCheckBox* checkbox_checksum;
     wxCheckBox* checkbox_limbo;
-    wxCheckBox* checkbox_metadata;
     wxCheckBox* checkbox_garbage;
     wxCheckBox* checkbox_transport;
     wxCheckBox* checkbox_extern;
-    void createControls();
-    void layoutControls();
+
+    wxCheckBox* checkbox_expand;
+    wxCheckBox* checkbox_olddescription;
+    wxCheckBox* checkbox_noDBtrigger;
+    wxCheckBox* checkbox_zip;
+
+    virtual void createControls();
+    virtual void layoutControls();
     virtual void updateControls();
 
     static wxString getFrameId(DatabasePtr db);
@@ -61,4 +66,21 @@ private:
     DECLARE_EVENT_TABLE()
 };
 
+class BackupThread : public BackupRestoreThread
+{
+public:
+    BackupThread(BackupFrame* frame, wxString server,
+        wxString username, wxString password, wxString rolename, wxString charset,
+        wxString dbfilename, wxString bkfilename,
+        IBPP::BRF flags, int interval, int parallel,
+        wxString skipData, wxString includeData,
+        wxString cryptPluginName, wxString keyPlugin, wxString keyEncrypt
+    );
+protected:
+    virtual void Execute(IBPP::Service);
+
+    int factorM;
+
+};
 #endif // BACKUPFRAME_H
+

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004-2021 The FlameRobin Development Team
+  Copyright (c) 2004-2022 The FlameRobin Development Team
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -190,7 +190,7 @@ void StatementHistoryDialog::OnListBoxSelect(wxCommandEvent& WXUNUSED(event))
         p = sql.find(searchString, p+1);
         if (p == int(wxString::npos))
             break;
-        textctrl_statement->StartStyling(p, 0);
+        textctrl_statement->StartStyling(p);
         textctrl_statement->SetStyling(searchString.Length(), 1);
     }
 }

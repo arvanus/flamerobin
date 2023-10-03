@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004-2021 The FlameRobin Development Team
+  Copyright (c) 2004-2022 The FlameRobin Development Team
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -39,13 +39,13 @@
     #include "frconfig.h"
 #endif
 #include "core/FRError.h"
-
+#include"gui/FRStyle.h"
 
 const wxString Config::pathSeparator = "/";
 
 FRConfig& config()
 {
-    static FRConfig c;
+    static FRConfig c;    
     return c;
 }
 
@@ -400,6 +400,12 @@ const wxString FRConfig::getSysTemplateFileName(const wxString& templateName)
         }
     }
     return fileName.GetFullPath();
+}
+
+wxString FRConfig::getXmlStylesPath() const
+{
+    return getHomePath() + "xml-styles"
+        + wxFileName::GetPathSeparator();
 }
 
 bool FRConfig::getUseLocalConfig() const

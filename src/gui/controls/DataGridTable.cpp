@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004-2021 The FlameRobin Development Team
+  Copyright (c) 2004-2022 The FlameRobin Development Team
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -210,7 +210,8 @@ wxGridCellAttr* DataGridTable::GetAttr(int row, int col,
     else if (info.fieldModified)
         textCol = *wxBLUE;
     else
-        textCol = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+        //textCol = stylerManager().getDefaultStyle()->getfgColour() != 0 ? stylerManager().getDefaultStyle()->getfgColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+        textCol = stylerManager().getDefaultStyle()->getfgColor();
     cellAttriM->SetTextColour(textCol);
 
     // background colour
@@ -222,7 +223,8 @@ wxGridCellAttr* DataGridTable::GetAttr(int row, int col,
     else if (readOnlyM || info.fieldReadOnly || info.fieldBlob)
         bgCol = frlayoutconfig().getReadonlyColour();
     else
-        bgCol = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+        //bgCol = stylerManager().getDefaultStyle()->getbgColour() != 0 ? stylerManager().getDefaultStyle()->getbgColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+        bgCol = stylerManager().getDefaultStyle()->getbgColor();
     cellAttriM->SetBackgroundColour(bgCol);
 
     // text alignment

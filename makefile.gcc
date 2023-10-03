@@ -97,6 +97,7 @@ FLAMEROBIN_OBJECTS =  \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_FieldPropertiesDialog.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_FindDialog.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_FRLayoutConfig.o \
+	gccu$(R_OPT)$(D_OPT)\flamerobin_FRStyle.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_GUIURIHandlerHelper.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_HtmlHeaderMetadataItemVisitor.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_HtmlTemplateProcessor.o \
@@ -112,8 +113,12 @@ FLAMEROBIN_OBJECTS =  \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_ReorderFieldsDialog.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_RestoreFrame.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_ServerRegistrationDialog.o \
+	gccu$(R_OPT)$(D_OPT)\flamerobin_ServiceBaseFrame.o \
+	gccu$(R_OPT)$(D_OPT)\flamerobin_ShutdownStartupBaseFrame.o \
+	gccu$(R_OPT)$(D_OPT)\flamerobin_ShutdownFrame.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_SimpleHtmlFrame.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_StatementHistoryDialog.o \
+	gccu$(R_OPT)$(D_OPT)\flamerobin_StartupFrame.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_StyleGuide.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_UserDialog.o \
 	gccu$(R_OPT)$(D_OPT)\flamerobin_UsernamePasswordDialog.o \
@@ -403,6 +408,9 @@ gccu$(R_OPT)$(D_OPT)\flamerobin_FindDialog.o: ./src/gui/FindDialog.cpp
 gccu$(R_OPT)$(D_OPT)\flamerobin_FRLayoutConfig.o: ./src/gui/FRLayoutConfig.cpp
 	$(CXX) -c -o $@ $(FLAMEROBIN_CXXFLAGS) $(CPPDEPS) $<
 
+gccu$(R_OPT)$(D_OPT)\flamerobin_FRStyle.o: ./${SOURCEDIR}/gui/FRStyle.cpp
+	$(CXX) -c -o $@ $(FLAMEROBIN_CXXFLAGS) $(CPPDEPS) $<
+
 gccu$(R_OPT)$(D_OPT)\flamerobin_GUIURIHandlerHelper.o: ./src/gui/GUIURIHandlerHelper.cpp
 	$(CXX) -c -o $@ $(FLAMEROBIN_CXXFLAGS) $(CPPDEPS) $<
 
@@ -448,10 +456,22 @@ gccu$(R_OPT)$(D_OPT)\flamerobin_RestoreFrame.o: ./src/gui/RestoreFrame.cpp
 gccu$(R_OPT)$(D_OPT)\flamerobin_ServerRegistrationDialog.o: ./src/gui/ServerRegistrationDialog.cpp
 	$(CXX) -c -o $@ $(FLAMEROBIN_CXXFLAGS) $(CPPDEPS) $<
 
+gccu$(R_OPT)$(D_OPT)\flamerobin_ServiceBaseFrame.o: ./${SOURCEDIR}/gui/ServiceBaseFrame.cpp
+	$(CXX) -c -o $@ $(FLAMEROBIN_CXXFLAGS) $(CPPDEPS) $<
+
+gccu$(R_OPT)$(D_OPT)\flamerobin_ShutdownStartupBaseFrame.o: ./${SOURCEDIR}/gui/ShutdownStartupBaseFrame.cpp
+	$(CXX) -c -o $@ $(FLAMEROBIN_CXXFLAGS) $(CPPDEPS) $<
+
+gccu$(R_OPT)$(D_OPT)\flamerobin_ShutdownFrame.o: ./${SOURCEDIR}/gui/ShutdownFrame.cpp
+	$(CXX) -c -o $@ $(FLAMEROBIN_CXXFLAGS) $(CPPDEPS) $<
+
 gccu$(R_OPT)$(D_OPT)\flamerobin_SimpleHtmlFrame.o: ./src/gui/SimpleHtmlFrame.cpp
 	$(CXX) -c -o $@ $(FLAMEROBIN_CXXFLAGS) $(CPPDEPS) $<
 
 gccu$(R_OPT)$(D_OPT)\flamerobin_StatementHistoryDialog.o: ./src/gui/StatementHistoryDialog.cpp
+	$(CXX) -c -o $@ $(FLAMEROBIN_CXXFLAGS) $(CPPDEPS) $<
+
+gccu$(R_OPT)$(D_OPT)\flamerobin_StartupFrame.o: ./${SOURCEDIR}/gui/StartupFrame.cpp
 	$(CXX) -c -o $@ $(FLAMEROBIN_CXXFLAGS) $(CPPDEPS) $<
 
 gccu$(R_OPT)$(D_OPT)\flamerobin_StyleGuide.o: ./src/gui/StyleGuide.cpp

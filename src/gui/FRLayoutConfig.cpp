@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004-2021 The FlameRobin Development Team
+  Copyright (c) 2004-2022 The FlameRobin Development Team
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -195,7 +195,8 @@ wxColour FRLayoutConfig::getReadonlyColour()
     {
         // first try to compute a colour that is between "white" and "gray"
         // (but use the actual system colours instead of hard-coded values)
-        wxColour clWnd(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
+        //wxColour clWnd(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
+        wxColour clWnd(stylerManager().getDefaultStyle()->getbgColor());
         int r1 = clWnd.Red(), g1 = clWnd.Green(), b1 = clWnd.Blue();
         wxColour clBtn = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE);
         int r2 = clBtn.Red(), g2 = clBtn.Green(), b2 = clBtn.Blue();

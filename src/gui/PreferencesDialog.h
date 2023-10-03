@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2004-2021 The FlameRobin Development Team
+  Copyright (c) 2004-2022 The FlameRobin Development Team
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -62,6 +62,7 @@ public:
     int getControlLeft();
     // parent for created controls
     wxPanel* getPage() const;
+    PrefDlgSetting* getParent() const;
     virtual bool loadFromTargetConfig(Config& targetConfig) = 0;
     virtual bool parseProperty(wxXmlNode* xmln);
     virtual bool saveToTargetConfig(Config& targetConfig) = 0;
