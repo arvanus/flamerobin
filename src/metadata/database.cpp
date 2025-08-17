@@ -67,6 +67,9 @@
 #include "metadata/view.h"
 #include "sql/SqlStatement.h"
 #include "sql/SqlTokenizer.h"
+#include "gui/MainFrame.h"
+#include "gui/controls/DBHTreeControl.h"
+#include "main.h"
 
 // Credentials class
 void Credentials::setCharset(const wxString& value)
@@ -679,6 +682,21 @@ Relation* Database::getRelationForTrigger(DMLTrigger* trigger)
 
 void Database::dropObject(MetadataItem* object)
 {
+    if (!object)
+        return;
+        
+    // Remove orphaned tree nodes before removing from collections
+    wxWindow* topWindow = wxGetApp().GetTopWindow();
+    if (topWindow) {
+        MainFrame* mainFrame = dynamic_cast<MainFrame*>(topWindow);
+        if (mainFrame) {
+            DBHTreeControl* treeCtrl = mainFrame->getTreeCtrl();
+            if (treeCtrl) {
+                treeCtrl->removeOrphanedNodes(object);
+            }
+        }
+    }
+    
     // find the collection that contains it, and remove it
     NodeType nt = object->getType();
     switch (nt)
@@ -749,6 +767,19 @@ void Database::dropObject(MetadataItem* object)
         default:
             return;
     };
+    
+    // Special handling for triggers: notify tables and views to update their UI
+    if (nt == ntDMLTrigger || nt == ntDBTrigger || nt == ntDDLTrigger) {
+        Tables::iterator itt;
+        for (itt = tablesM->begin(); itt != tablesM->end(); itt++)
+            (*itt)->notifyObservers();
+        
+        Views::iterator itv;
+        for (itv = viewsM->begin(); itv != viewsM->end(); itv++)
+            (*itv)->notifyObservers();
+            
+        notifyObservers();
+    }
 }
 
 void Database::addObject(NodeType type, const wxString& name)
@@ -872,17 +903,6 @@ void Database::parseCommitedSql(const SqlStatement& stm)
         return;
     }
 
-    // update all TABLEs, VIEWs and DATABASE on "DROP TRIGGER"
-    if (stm.actionIs(actDROP, ntDMLTrigger))
-    {
-        Tables::iterator itt;
-        for (itt = tablesM->begin(); itt != tablesM->end(); itt++)
-            (*itt)->notifyObservers();
-        Views::iterator itv;
-        for (itv = viewsM->begin(); itv != viewsM->end(); itv++)
-            (*itv)->notifyObservers();
-        notifyObservers();
-    }
 
     if (stm.actionIs(actCREATE) || stm.actionIs(actDECLARE))
     {

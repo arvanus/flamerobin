@@ -34,6 +34,8 @@ class DBHTreeControl: public wxTreeCtrl
 private:
     // recursive function used by selectMetadataItem
     bool findMetadataItem(MetadataItem *item, wxTreeItemId parent);
+    // recursive function used by removeOrphanedNodes
+    bool removeOrphanedNodesRecursive(MetadataItem* deletedItem, wxTreeItemId parent, MetadataItem* selectedMetadata, bool& selectedNodeRemoved);
     bool allowContextMenuM;
 
 protected:
@@ -59,6 +61,9 @@ public:
 
     // Selects the tree item represented by the metadata item
     bool selectMetadataItem(MetadataItem* item);
+
+    // Removes orphaned tree nodes that reference a deleted metadata item
+    bool removeOrphanedNodes(MetadataItem* deletedItem);
 
     wxTreeItemId getLastItem(wxTreeItemId id);
     wxTreeItemId getNextItem(wxTreeItemId current);

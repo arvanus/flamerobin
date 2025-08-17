@@ -1391,7 +1391,13 @@ wxTreeItemId DBHTreeControl::addRootNode(MetadataItem* rootItem)
 //! returns the object that selected wxTree node observes
 MetadataItem* DBHTreeControl::getSelectedMetadataItem()
 {
-    return getMetadataItem(GetSelection());
+    wxTreeItemId item = GetSelection();
+    if (item.IsOk())
+        return getMetadataItem(item);
+    
+    // if no selection, return the root item
+    wxTreeItemId root = GetRootItem();
+    return root.IsOk() ? getMetadataItem(root) : nullptr;
 }
 
 //! returns the object that some wxTree node observes
@@ -1427,6 +1433,73 @@ bool DBHTreeControl::findMetadataItem(MetadataItem *item, wxTreeItemId parent)
 bool DBHTreeControl::selectMetadataItem(MetadataItem* item)
 {
     return item && findMetadataItem(item, GetRootItem());
+}
+
+bool DBHTreeControl::removeOrphanedNodes(MetadataItem* deletedItem)
+{
+    if (!deletedItem)
+        return false;
+    
+    wxTreeItemId selectedItem = GetSelection();
+    MetadataItem* selectedMetadata = nullptr;
+    bool selectedNodeRemoved = false;
+    
+    if (selectedItem.IsOk())
+        selectedMetadata = getMetadataItem(selectedItem);
+    
+    bool nodeRemoved = removeOrphanedNodesRecursive(deletedItem, GetRootItem(), selectedMetadata, selectedNodeRemoved);
+    
+    // If the selected node was removed, select parent or clear selection
+    if (selectedNodeRemoved)
+    {
+        // Try to select a reasonable alternative
+        wxTreeItemId newSelection = GetRootItem();
+        if (newSelection.IsOk())
+            SelectItem(newSelection);
+        else
+            UnselectAll();
+    }
+    
+    return nodeRemoved;
+}
+
+bool DBHTreeControl::removeOrphanedNodesRecursive(MetadataItem* deletedItem, wxTreeItemId parent, MetadataItem* selectedMetadata, bool& selectedNodeRemoved)
+{
+    bool anyNodeRemoved = false;
+    wxTreeItemIdValue cookie;
+    wxTreeItemId child = GetFirstChild(parent, cookie);
+    
+    while (child.IsOk())
+    {
+        wxTreeItemId nextChild = GetNextChild(parent, cookie);
+        
+        MetadataItem* childMetadata = getMetadataItem(child);
+        if (childMetadata == deletedItem)
+        {
+            // Check if this is the selected node
+            if (childMetadata == selectedMetadata)
+                selectedNodeRemoved = true;
+                
+            // Remove this orphaned node
+            Delete(child);
+            anyNodeRemoved = true;
+        }
+        else
+        {
+            // Recursively check children
+            bool childRemoved = false;
+            if (removeOrphanedNodesRecursive(deletedItem, child, selectedMetadata, childRemoved))
+            {
+                anyNodeRemoved = true;
+                if (childRemoved)
+                    selectedNodeRemoved = true;
+            }
+        }
+        
+        child = nextChild;
+    }
+    
+    return anyNodeRemoved;
 }
 
 //! recursively get the last child of item
